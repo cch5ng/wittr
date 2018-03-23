@@ -3,6 +3,7 @@ import ToastsView from './views/Toasts';
 import idb from 'idb';
 
 function openDatabase() {
+  console.log('gets to openDatabase()')
   // If the browser doesn't support service worker,
   // we don't care about having a database
   if (!navigator.serviceWorker) {
@@ -14,6 +15,23 @@ function openDatabase() {
   // that uses 'id' as its key
   // and has an index called 'by-date', which is sorted
   // by the 'time' property
+
+  var dbPromise = idb.open('wittr', 1, function(upgradeDb) {
+
+    // note that did not need to use switch for quiz 4.6
+    switch(upgradeDb.oldVersion) {
+      case 0:
+        upgradeDb.createObjectStore('wittrs', {keyPath: 'id'})
+      case 1:
+        var wittrStore = upgradeDb.transaction.objectStore('wittrs');
+        wittrStore.createIndex('by-date', 'time');
+    }
+  })
+
+  // before returning the dbPromise, would get an err like
+  // VM1191 main.js:2318 Uncaught TypeError: Cannot read property 'then' of undefined
+  // at IndexController._onSocketMessage
+  return dbPromise;
 }
 
 export default function IndexController(container) {
@@ -133,8 +151,16 @@ IndexController.prototype._onSocketMessage = function(data) {
   this._dbPromise.then(function(db) {
     if (!db) return;
 
-    // TODO: put each message into the 'wittrs'
-    // object store.
+    var tx = db.transaction('wittrs', 'readwrite');
+    var wittrStore = tx.objectStore('wittrs');
+
+    messages.forEach(m => {
+      wittrStore.put(m)
+    });
+
+    return tx.complete;
+  }).then(function() {
+    console.log('added messages to wittrs');
   });
 
   this._postsView.addPosts(messages);
