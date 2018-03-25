@@ -162,8 +162,32 @@ IndexController.prototype._cleanImageCache = function() {
     // TODO: open the 'wittr' object store, get all the messages,
     // gather all the photo urls.
     //
+    let tx = db.transaction('wittrs');
+    var store = tx.objectStore('wittrs');
+    let messages = store.getAll();
+    let photosAr = [];
+
+    messages.forEach(m => {
+      photosAr.push(m.photo);
+    })
     // Open the 'wittr-content-imgs' cache, and delete any entry
     // that you no longer need.
+
+    // TODO 032518 think this section should behave more like
+    // index.js for sw about lines 25 - 32
+    // filter the cached photos based on whether the key matches item in photosAr
+    // delete resulting list
+    caches.keys().then(function(contentImgsCache) {
+      return Promise.all(
+        contentImageCache.filter(function(img) {
+          return photosAr.indexOf(img) > -1
+        }).map(img => (
+          return caches.delete(img);
+        ))
+      )
+    })
+
+
   });
 };
 
