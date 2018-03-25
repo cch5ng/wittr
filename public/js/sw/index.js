@@ -72,6 +72,7 @@ function servePhoto(request) {
 
       // else fetch img across netwrok
       fetch(request.url).then(function(networkResponse) {
+        // think storageUrl acts as the key
         cache.put(storageUrl, networkResponse.clone());
         return networkResponse;
       })
