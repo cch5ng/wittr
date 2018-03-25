@@ -1,4 +1,4 @@
-var staticCacheName = 'wittr-static-v7';
+var staticCacheName = 'wittr-static-v8';
 var contentImgsCache = 'wittr-content-imgs';
 var allCaches = [
   staticCacheName,

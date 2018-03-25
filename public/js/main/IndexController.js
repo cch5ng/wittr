@@ -162,16 +162,26 @@ IndexController.prototype._cleanImageCache = function() {
     // TODO: open the 'wittr' object store, get all the messages,
     // gather all the photo urls.
     //
-    let tx = db.transaction('wittrs');
-    var store = tx.objectStore('wittrs');
-    let messages = store.getAll();
+    // let tx = db.transaction('wittrs');
+    // var store = tx.objectStore('wittrs');
+    // let messages = store.getAll();
     let photosAr = [];
 
-    messages.forEach(m => {
-      photosAr.push(m.photo);
-    })
+
+    db.transaction('wittrs').objectStore('wittrs').getAll()
+      .then(function(messages) {
+        messages.forEach(m => {
+          if (m.photo) {
+            photosAr.push(m.photo);
+          }
+        });
+        console.log('photosAr: ' + photosAr);
+      });
+
     // Open the 'wittr-content-imgs' cache, and delete any entry
     // that you no longer need.
+    // 032518: think that the inverse logic was expected, only keep images that
+    //   are associated with the content in idb
 
     // TODO 032518 think this section should behave more like
     // index.js for sw about lines 25 - 32
@@ -179,15 +189,13 @@ IndexController.prototype._cleanImageCache = function() {
     // delete resulting list
     caches.keys().then(function(contentImgsCache) {
       return Promise.all(
-        contentImageCache.filter(function(img) {
-          return photosAr.indexOf(img) > -1
-        }).map(img => (
+        contentImgsCache.filter(function(img) {
+          return photosAr.indexOf(img) === -1;
+        }).map(img => { // 032518 not positive why used map and not forEach
           return caches.delete(img);
-        ))
+        })
       )
     })
-
-
   });
 };
 
