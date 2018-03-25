@@ -167,17 +167,14 @@ IndexController.prototype._onSocketMessage = function(data) {
 
     store.index('by-date').openCursor(null, 'prev')
       .then(function(cursor) {
-        cursor.advance(30);
+        // issue was need to return in order to get the group to delete
+        return cursor.advance(30);
       }).then(function deleteCursor(cursor) {
         if (!cursor) return;
         cursor.delete();
-        return cursor.continue().then(deleteCursor)
-        console.log('deleted cursor');
+        return cursor.continue().then(deleteCursor);
+        //console.log('deleted cursor');
       })
-
-
-     {
-    }
 
     // TODO: keep the newest 30 entries in 'wittrs',
     // but delete the rest.
