@@ -162,13 +162,32 @@ IndexController.prototype._cleanImageCache = function() {
     // TODO: open the 'wittr' object store, get all the messages,
     // gather all the photo urls.
     //
-    // let tx = db.transaction('wittrs');
-    // var store = tx.objectStore('wittrs');
-    // let messages = store.getAll();
     let photosAr = [];
 
+    // jake solution
+    let tx = db.transaction('wittrs');
+    return tx.objectStore('wittrs').getAll(function(messages) {
+      messages.forEach(msg => {
+        if (msg.photo) {
+          photosAr.push(msg.photo);
+        }
+      })
 
-    db.transaction('wittrs').objectStore('wittrs').getAll()
+      return caches.open('wittr-content-imgs');
+    }).then(function(cache) {
+      return cache.keys(function(requests) {
+        requests.forEach(function(req) {
+          let url = new URL(req.url)
+          if (photosAr.indexOf(img) === -1) {
+            cache.delete(req);
+          }
+        });
+      })
+    })
+
+
+    /* my solution 032518 */
+    /* db.transaction('wittrs').objectStore('wittrs').getAll()
       .then(function(messages) {
         messages.forEach(m => {
           if (m.photo) {
@@ -196,6 +215,8 @@ IndexController.prototype._cleanImageCache = function() {
         })
       )
     })
+    end my solution */
+
   });
 };
 
