@@ -64,19 +64,34 @@ function servePhoto(request) {
   // This means you only store one copy of each photo.
   var storageUrl = request.url.replace(/-\d+px\.jpg$/, '');
 
-  if (caches.match(storageUrl)) {
-    return caches.match(storageUrl);
-  }
+  // jake solution
+  return caches.open(contentImgsCache).then(function(cache) {
+    return cache.match(storageUrl).then(function(response) {
+      // if there is a matching img in cache, return it
+      if (response) return response;
 
-  fetch(request.url)
-    .then(function(resp) {
-      caches.open(contentImgsCache).then(function(cache) {
-        resp.forEach(img => {
-          cache.put(storageUrl, img);
-        })
-        return cache.addAll(resp.clone());
+      // else fetch img across netwrok
+      fetch(request.url).then(function(networkResponse) {
+        cache.put(storageUrl, networkResponse.clone());
+        return networkResponse;
       })
     })
+  })
+
+  // my solution
+  // if (caches.match(storageUrl)) {
+  //   return caches.match(storageUrl);
+  // }
+
+  // fetch(request.url)
+  //   .then(function(resp) {
+  //     caches.open(contentImgsCache).then(function(cache) {
+  //       resp.forEach(img => {
+  //         cache.put(storageUrl, img);
+  //       })
+  //       return cache.addAll(resp.clone());
+  //     })
+  //   })
 
 
   // TODO: return images from the "wittr-content-imgs" cache
