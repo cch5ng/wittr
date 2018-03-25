@@ -156,12 +156,28 @@ IndexController.prototype._onSocketMessage = function(data) {
 
   this._dbPromise.then(function(db) {
     if (!db) return;
+    let counter = 0;
 
     var tx = db.transaction('wittrs', 'readwrite');
     var store = tx.objectStore('wittrs');
+
     messages.forEach(function(message) {
       store.put(message);
     });
+
+    store.index('by-date').openCursor(null, 'prev')
+      .then(function(cursor) {
+        cursor.advance(30);
+      }).then(function deleteCursor(cursor) {
+        if (!cursor) return;
+        cursor.delete();
+        return cursor.continue().then(deleteCursor)
+        console.log('deleted cursor');
+      })
+
+
+     {
+    }
 
     // TODO: keep the newest 30 entries in 'wittrs',
     // but delete the rest.
